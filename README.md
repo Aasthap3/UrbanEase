@@ -2,6 +2,36 @@
 
 UrbanEase is a geospatial neighborhood discovery platform designed to help people understand how convenient a neighborhood is for everyday life.
 
+## Phase 8 status
+
+UrbanEase now supports authenticated personalized scoring using MCDA (Multi-Criteria Decision Analysis):
+
+- `GET /api/preferences`
+- `PUT /api/preferences`
+- `GET /api/score/personalized?latitude=<lat>&longitude=<lon>&radius=<meters>`
+- Student, Working Professional, Family, and Custom profiles are editable starting points.
+- Phase 7 distance decay and category accessibility remain unchanged; only category weights vary.
+
+Profile weights are baseline assumptions intended as starting points for personalization, not scientifically validated universal importance values. Weights must total 100.
+
+```text
+Personalized Score = Σ(Wᵢ × Sᵢ)
+```
+
+where `Wᵢ` is the selected percentage weight and `Sᵢ` is the existing category accessibility score.
+
+## Phase 7 status
+
+The Explore experience now includes a transparent UrbanEase Score based on the selected location and radius:
+
+- `GET /api/score?latitude=<lat>&longitude=<lon>&radius=<meters>`
+- Each category uses `S(d) = 1 / (1 + d / 1000)` and keeps the maximum contribution from that category.
+- Fixed baseline category weights total 100, so the final score ranges from 0 to 100.
+- The score uses stored PostGIS nearby results and does not trigger a separate Overpass discovery.
+- Missing categories contribute zero and the score explains counts, nearest distance, weight, and contribution.
+
+The score is a decision-support metric based on available OpenStreetMap data, distance, the selected radius, and baseline weights. It is not an objective measure of neighborhood quality.
+
 ## Phase 5 status
 
 Nearby amenity discovery is available through OpenStreetMap data queried with the Overpass API:

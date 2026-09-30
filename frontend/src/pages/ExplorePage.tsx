@@ -4,9 +4,19 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, LoaderCircle, MapPin, Search, SlidersHorizontal } from 'lucide-react'
 import { getNearbyAmenities } from '../services/amenityService'
 import { searchLocations } from '../services/locationService'
+import { getUrbanEaseScore } from '../services/scoreService'
+import { getPersonalizedScore } from '../services/personalizedScoreService'
+import { getPreferences, hasStoredAuthentication, updatePreferences } from '../services/preferenceService'
 import type { AmenityCategory, NearbyAmenity } from '../types/amenity'
 import type { LocationSearchResult } from '../types/location'
 import { UrbanEaseMap } from '../components/map/UrbanEaseMap'
+import { UrbanEaseScoreCard } from '../components/score/UrbanEaseScoreCard'
+import type { UrbanScoreResponse } from '../types/urbanScore'
+import type { PersonalizedScoreResponse } from '../types/urbanScore'
+import type { PreferenceResponse, ProfileName } from '../types/preferences'
+import { weightsForProfile } from '../types/preferences'
+import { PersonalizationPanel } from '../components/score/PersonalizationPanel'
+import { PersonalizedScoreCard } from '../components/score/PersonalizedScoreCard'
 
 const radiusOptions = [
   { value: 500, label: '500 m' },
@@ -54,9 +64,37 @@ export function ExplorePage() {
   const [amenityLoading, setAmenityLoading] = useState(false)
   const [amenityError, setAmenityError] = useState<string | null>(null)
   const [selectedAmenity, setSelectedAmenity] = useState<NearbyAmenity | null>(null)
+  const [urbanScore, setUrbanScore] = useState<UrbanScoreResponse | null>(null)
+  const [scoreLoading, setScoreLoading] = useState(false)
+  const [scoreError, setScoreError] = useState<string | null>(null)
+  const [scoreRetryToken, setScoreRetryToken] = useState(0)
+  const [authenticated] = useState(() => hasStoredAuthentication())
+  const [draftPreferences, setDraftPreferences] = useState<PreferenceResponse | null>(null)
+  const [appliedPreferences, setAppliedPreferences] = useState<PreferenceResponse | null>(null)
+  const [preferenceLoading, setPreferenceLoading] = useState(false)
+  const [preferenceSaving, setPreferenceSaving] = useState(false)
+  const [preferenceError, setPreferenceError] = useState<string | null>(null)
+  const [personalizedScore, setPersonalizedScore] = useState<PersonalizedScoreResponse | null>(null)
+  const [personalizedScoreLoading, setPersonalizedScoreLoading] = useState(false)
+  const [personalizedScoreError, setPersonalizedScoreError] = useState<string | null>(null)
+  const [personalizedScoreRetryToken, setPersonalizedScoreRetryToken] = useState(0)
   const searchAbortRef = useRef<AbortController | null>(null)
 
   useEffect(() => () => searchAbortRef.current?.abort(), [])
+
+  useEffect(() => {
+    if (!authenticated) {
+      return
+    }
+    setPreferenceLoading(true)
+    getPreferences()
+      .then((preferences) => {
+        setDraftPreferences(preferences)
+        setAppliedPreferences(preferences)
+      })
+      .catch(() => setPreferenceError('We could not load your preferences.'))
+      .finally(() => setPreferenceLoading(false))
+  }, [authenticated])
 
   useEffect(() => {
     if (!selectedLocation) {
@@ -84,6 +122,56 @@ export function ExplorePage() {
 
     return () => controller.abort()
   }, [radius, selectedLocation])
+
+  useEffect(() => {
+    if (!selectedLocation) {
+      setUrbanScore(null)
+      return
+    }
+
+    const controller = new AbortController()
+    setScoreLoading(true)
+    setScoreError(null)
+    getUrbanEaseScore(selectedLocation.latitude, selectedLocation.longitude, radius, controller.signal)
+      .then((response) => setUrbanScore(response))
+      .catch((error: unknown) => {
+        if (!axios.isCancel(error)) {
+          setScoreError('We could not calculate the score. Try again.')
+          setUrbanScore(null)
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setScoreLoading(false)
+        }
+      })
+
+    return () => controller.abort()
+  }, [radius, scoreRetryToken, selectedLocation])
+
+  useEffect(() => {
+    if (!authenticated || !selectedLocation || !appliedPreferences) {
+      setPersonalizedScore(null)
+      return
+    }
+    const controller = new AbortController()
+    setPersonalizedScoreLoading(true)
+    setPersonalizedScoreError(null)
+    getPersonalizedScore(selectedLocation.latitude, selectedLocation.longitude, radius, controller.signal)
+      .then((response) => setPersonalizedScore(response))
+      .catch((error: unknown) => {
+        if (!axios.isCancel(error)) {
+          setPersonalizedScoreError('We could not calculate your personalized score. Try again.')
+          setPersonalizedScore(null)
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setPersonalizedScoreLoading(false)
+        }
+      })
+    return () => controller.abort()
+  }, [appliedPreferences, authenticated, personalizedScoreRetryToken, radius, selectedLocation])
 
   const visibleAmenities = useMemo(
     () => (category === 'all' ? amenities : amenities.filter((amenity) => amenity.category === category)),
@@ -141,6 +229,43 @@ export function ExplorePage() {
   function retryAmenities() {
     if (selectedLocation) {
       setSelectedLocation({ ...selectedLocation })
+    }
+  }
+
+  function handleProfileChange(profile: ProfileName) {
+    setDraftPreferences({
+      profile,
+      weights: weightsForProfile(profile),
+      weight_total: 100,
+    })
+    setPreferenceError(null)
+  }
+
+  function handleWeightChange(categoryName: AmenityCategory, weight: number) {
+    const safeWeight = Number.isFinite(weight) ? Math.max(0, Math.min(100, weight)) : 0
+    setDraftPreferences((current) => current ? {
+      ...current,
+      profile: 'custom',
+      weights: current.weights.map((item) => item.category === categoryName ? { ...item, weight: safeWeight } : item),
+      weight_total: current.weights.reduce((sum, item) => sum + (item.category === categoryName ? safeWeight : item.weight), 0),
+    } : current)
+    setPreferenceError(null)
+  }
+
+  async function handleApplyPreferences() {
+    if (!draftPreferences || Math.abs(draftPreferences.weight_total - 100) >= 0.01) {
+      return
+    }
+    setPreferenceSaving(true)
+    setPreferenceError(null)
+    try {
+      const saved = await updatePreferences(draftPreferences.profile, draftPreferences.weights)
+      setDraftPreferences(saved)
+      setAppliedPreferences(saved)
+    } catch {
+      setPreferenceError('We could not save your preferences. Your edits are still here.')
+    } finally {
+      setPreferenceSaving(false)
     }
   }
 
@@ -292,6 +417,28 @@ export function ExplorePage() {
           )}
         </div>
       </section>
+      <UrbanEaseScoreCard
+        score={urbanScore}
+        loading={scoreLoading}
+        error={scoreError}
+        onRetry={() => setScoreRetryToken((token) => token + 1)}
+      />
+      <PersonalizationPanel
+        authenticated={authenticated}
+        profile={draftPreferences?.profile ?? 'custom'}
+        weights={draftPreferences?.weights ?? weightsForProfile('custom')}
+        error={preferenceError}
+        saving={preferenceLoading || preferenceSaving}
+        onProfileChange={handleProfileChange}
+        onWeightChange={handleWeightChange}
+        onApply={handleApplyPreferences}
+      />
+      {authenticated && <PersonalizedScoreCard
+        score={personalizedScore}
+        loading={personalizedScoreLoading}
+        error={personalizedScoreError}
+        onRetry={() => setPersonalizedScoreRetryToken((token) => token + 1)}
+      />}
     </main>
   )
 }

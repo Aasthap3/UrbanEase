@@ -5,6 +5,9 @@ from app.api.auth import router as auth_router
 from app.api.amenities import router as amenities_router
 from app.api.health import router as health_router
 from app.api.locations import router as locations_router
+from app.api.personalized_score import router as personalized_score_router
+from app.api.preferences import router as preferences_router
+from app.api.score import router as score_router
 
 app = FastAPI(
     title='UrbanEase API',
@@ -24,6 +27,9 @@ app.include_router(health_router, prefix='/api')
 app.include_router(auth_router, prefix='/api')
 app.include_router(amenities_router, prefix='/api')
 app.include_router(locations_router, prefix='/api')
+app.include_router(score_router, prefix='/api')
+app.include_router(preferences_router, prefix='/api')
+app.include_router(personalized_score_router, prefix='/api')
 
 
 @app.get('/')

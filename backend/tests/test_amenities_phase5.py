@@ -231,6 +231,7 @@ def test_nearby_endpoint_returns_successful_empty_result(monkeypatch: pytest.Mon
         return []
 
     monkeypatch.setattr(amenity_service, 'fetch_overpass_elements', fake_fetch)
+    monkeypatch.setattr(amenity_service, 'query_nearby_amenities', lambda *args, **kwargs: [])
 
     response = client.get(
         '/api/amenities/nearby',

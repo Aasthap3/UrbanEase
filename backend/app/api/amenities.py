@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.scoring import SUPPORTED_RADII
 from app.models.amenity import AmenityCategory
 from app.schemas.amenity import NearbyAmenitiesResponse
 from app.services.amenity_service import discover_and_query_nearby
 from app.services.overpass_service import OverpassServiceError
 
 router = APIRouter(prefix='/amenities', tags=['amenities'])
-SUPPORTED_RADII = {500, 1000, 2000, 5000}
 
 
 @router.get('/nearby', response_model=NearbyAmenitiesResponse)

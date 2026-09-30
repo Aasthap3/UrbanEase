@@ -29,6 +29,32 @@ curl 'http://127.0.0.1:8000/api/amenities/nearby?latitude=18.5007&longitude=73.9
 
 Results include normalized OSM identity, category, coordinates, optional metadata, and `distance_meters`, sorted nearest first. Repeated discoveries update the same record using `(source, osm_type, osm_id)`. No matches return a successful empty result.
 
+# UrbanEase Score
+
+`GET /api/score?latitude=<lat>&longitude=<lon>&radius=<meters>` calculates the baseline accessibility score from stored nearby amenities. It uses the existing PostGIS nearby query and does not start a separate Overpass discovery.
+
+The distance-decay function is:
+
+```text
+S(d) = 1 / (1 + d / 1000)
+```
+
+Each category uses the maximum `S(d)` among its amenities. The fixed category weights total 100: grocery 12, hospital 12, pharmacy 10, bank 6, atm 5, bus_stop 8, metro_station 8, restaurant 5, hotel 2, petrol_pump 5, police_station 8, laundry 3, gym 3, school 7, and college 6.
+
+The response includes the overall score, category score, weight, nearest distance, amenity count, and weighted contribution. Missing categories contribute zero. This is a transparent decision-support metric, not an objective quality judgment.
+
+# Personalized score and preferences
+
+Authenticated users can customize category weights with `GET /api/preferences` and `PUT /api/preferences`, then request `GET /api/score/personalized?latitude=<lat>&longitude=<lon>&radius=<meters>`. Updates must include all 15 categories, use non-negative weights, and total 100 within a small tolerance.
+
+The personalized score uses the unchanged Phase 7 accessibility scores and distance decay:
+
+```text
+Personalized Score = Σ(Wᵢ × Sᵢ)
+```
+
+Profile weights are baseline assumptions intended as starting points for personalization, not scientifically validated universal importance values. Preference and personalized-score endpoints require a Bearer token; the baseline score remains public.
+
 # Location search
 
 `GET /api/locations/search?q=<query>&limit=<limit>` uses the public Nominatim geocoding service to find cities, neighborhoods, addresses, and landmarks. Queries are trimmed, must contain 2-200 characters, and the limit defaults to 5 with a maximum of 10.
@@ -63,10 +89,13 @@ The backend exposes a REST API for health, geocoding, neighborhood metrics, and 
 - POST /api/auth/login
 - GET /api/auth/me
 - GET /api/locations/search
+- GET /api/score
+- GET /api/preferences
+- PUT /api/preferences
+- GET /api/score/personalized
 
 ## Planned endpoints
 
 - GET /api/amenities/nearby
-- POST /api/score/calculate
 - POST /api/score/compare
 - GET /api/categories
