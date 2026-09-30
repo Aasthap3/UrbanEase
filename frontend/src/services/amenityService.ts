@@ -8,9 +8,11 @@ export async function getNearbyAmenities(
   longitude: number,
   radius: number,
   category?: AmenityCategory,
+  signal?: AbortSignal,
 ): Promise<NearbyAmenitiesResponse> {
   const response = await axios.get<NearbyAmenitiesResponse>(`${apiUrl}/api/amenities/nearby`, {
     params: { latitude, longitude, radius, category },
+    signal,
   })
   return response.data
 }

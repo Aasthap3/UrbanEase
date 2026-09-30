@@ -15,6 +15,7 @@ import {
   Users,
 } from 'lucide-react'
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import { ExplorePage } from './pages/ExplorePage'
 
 const categories = [
   { name: 'Grocery', icon: <MapPin className="h-5 w-5" /> },
@@ -125,12 +126,12 @@ function App() {
                             aria-label="Example neighborhood search"
                           />
                         </div>
-                        <button
-                          type="button"
+                        <Link
+                          to="/explore"
                           className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
                         >
                           Search area
-                        </button>
+                        </Link>
                       </div>
 
                       <div className="mt-6 flex items-center gap-3 text-sm text-slate-600">
@@ -273,7 +274,7 @@ function App() {
               </main>
             }
           />
-          <Route path="/explore" element={<PlaceholderPage title="Explore" description="The interactive map and nearby amenities interface will be added in the next phase." />} />
+          <Route path="/explore" element={<ExplorePage />} />
           <Route path="/compare" element={<PlaceholderPage title="Compare" description="Neighborhood comparison views will be added in the next phase." />} />
           <Route path="/recommend" element={<PlaceholderPage title="Find My Ideal Area" description="Recommendation matching and explainable neighborhood suggestions will be added in a later phase." />} />
           <Route path="/login" element={<PlaceholderPage title="Login" description="Authentication features begin after the database and auth phases." />} />
