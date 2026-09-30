@@ -1,23 +1,12 @@
-import axios from 'axios'
 import type { PreferenceResponse, PreferenceUpdate } from '../types/preferences'
-
-const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
-
-function authConfig() {
-  const token = localStorage.getItem('access_token')
-  return token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-}
-
-export function hasStoredAuthentication(): boolean {
-  return Boolean(localStorage.getItem('access_token'))
-}
+import { apiClient } from './apiClient'
 
 export async function getPreferences(): Promise<PreferenceResponse> {
-  const response = await axios.get<PreferenceResponse>(`${apiUrl}/api/preferences`, authConfig())
+  const response = await apiClient.get<PreferenceResponse>('/api/preferences')
   return response.data
 }
 
 export async function updatePreferences(profile: PreferenceUpdate['profile'], weights: PreferenceUpdate['weights']): Promise<PreferenceResponse> {
-  const response = await axios.put<PreferenceResponse>(`${apiUrl}/api/preferences`, { profile, weights }, authConfig())
+  const response = await apiClient.put<PreferenceResponse>('/api/preferences', { profile, weights })
   return response.data
 }

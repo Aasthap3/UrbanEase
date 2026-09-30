@@ -16,6 +16,9 @@ import {
 } from 'lucide-react'
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import { ExplorePage } from './pages/ExplorePage'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
+import { useAuth } from './context/AuthContext'
 
 const categories = [
   { name: 'Grocery', icon: <MapPin className="h-5 w-5" /> },
@@ -41,6 +44,7 @@ const scoreBreakdown = [
 ]
 
 function App() {
+  const { user, isAuthenticated, isLoading, logout } = useAuth()
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking')
 
   useEffect(() => {
@@ -77,12 +81,19 @@ function App() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Link
-                to="/login"
-                className="hidden rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 md:inline-flex"
-              >
-                Log in
-              </Link>
+              {!isLoading && (isAuthenticated ? (
+                <>
+                  <span className="hidden max-w-40 truncate text-sm font-medium text-slate-600 md:inline">{user?.name ?? user?.email}</span>
+                  <button type="button" onClick={logout} className="hidden rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 md:inline-flex">Log out</button>
+                  <button type="button" onClick={logout} className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 md:hidden">Log out</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="hidden rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 md:inline-flex">Log in</Link>
+                  <Link to="/register" className="hidden rounded-full border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 md:inline-flex">Register</Link>
+                  <Link to="/login" className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 md:hidden">Log in</Link>
+                </>
+              ))}
               <Link
                 to="/explore"
                 className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
@@ -275,9 +286,10 @@ function App() {
             }
           />
           <Route path="/explore" element={<ExplorePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/compare" element={<PlaceholderPage title="Compare" description="Neighborhood comparison views will be added in the next phase." />} />
           <Route path="/recommend" element={<PlaceholderPage title="Find My Ideal Area" description="Recommendation matching and explainable neighborhood suggestions will be added in a later phase." />} />
-          <Route path="/login" element={<PlaceholderPage title="Login" description="Authentication features begin after the database and auth phases." />} />
         </Routes>
       </div>
     </BrowserRouter>

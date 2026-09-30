@@ -1,10 +1,12 @@
 import { Check, LoaderCircle, LockKeyhole, Save } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import type { AmenityCategory } from '../../types/amenity'
 import type { PreferenceWeight, ProfileName } from '../../types/preferences'
 import { profileLabels } from '../../types/preferences'
 
 interface PersonalizationPanelProps {
   authenticated: boolean
+  authLoading: boolean
   profile: ProfileName
   weights: PreferenceWeight[]
   error: string | null
@@ -20,6 +22,7 @@ function formatCategory(category: AmenityCategory): string {
 
 export function PersonalizationPanel({
   authenticated,
+  authLoading,
   profile,
   weights,
   error,
@@ -45,9 +48,12 @@ export function PersonalizationPanel({
         </div>
       </div>
 
-      {!authenticated ? (
+      {authLoading ? (
+        <div className="mt-5 flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600" role="status"><LoaderCircle className="h-4 w-4 animate-spin" />Checking your session...</div>
+      ) : !authenticated ? (
         <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          Sign in to personalize your UrbanEase Score. The public map and baseline score remain available.
+          <p>Sign in to personalize your UrbanEase Score. The public map and baseline score remain available.</p>
+          <div className="mt-3 flex flex-wrap gap-3"><Link to="/login?redirect=/explore" className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-600">Sign In</Link><Link to="/register?redirect=/explore" className="rounded-lg border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100">Create Account</Link></div>
         </div>
       ) : (
         <>

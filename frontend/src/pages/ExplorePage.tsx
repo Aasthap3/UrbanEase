@@ -6,7 +6,8 @@ import { getNearbyAmenities } from '../services/amenityService'
 import { searchLocations } from '../services/locationService'
 import { getUrbanEaseScore } from '../services/scoreService'
 import { getPersonalizedScore } from '../services/personalizedScoreService'
-import { getPreferences, hasStoredAuthentication, updatePreferences } from '../services/preferenceService'
+import { getPreferences, updatePreferences } from '../services/preferenceService'
+import { useAuth } from '../context/AuthContext'
 import type { AmenityCategory, NearbyAmenity } from '../types/amenity'
 import type { LocationSearchResult } from '../types/location'
 import { UrbanEaseMap } from '../components/map/UrbanEaseMap'
@@ -52,6 +53,7 @@ function formatCategory(category: AmenityCategory): string {
 }
 
 export function ExplorePage() {
+  const { isAuthenticated: authenticated, isLoading: authLoading } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('query') ?? '')
   const [selectedLocation, setSelectedLocation] = useState<LocationSearchResult | null>(() => locationFromSearchParams(searchParams))
@@ -68,7 +70,6 @@ export function ExplorePage() {
   const [scoreLoading, setScoreLoading] = useState(false)
   const [scoreError, setScoreError] = useState<string | null>(null)
   const [scoreRetryToken, setScoreRetryToken] = useState(0)
-  const [authenticated] = useState(() => hasStoredAuthentication())
   const [draftPreferences, setDraftPreferences] = useState<PreferenceResponse | null>(null)
   const [appliedPreferences, setAppliedPreferences] = useState<PreferenceResponse | null>(null)
   const [preferenceLoading, setPreferenceLoading] = useState(false)
@@ -83,7 +84,7 @@ export function ExplorePage() {
   useEffect(() => () => searchAbortRef.current?.abort(), [])
 
   useEffect(() => {
-    if (!authenticated) {
+    if (!authenticated || authLoading) {
       return
     }
     setPreferenceLoading(true)
@@ -94,7 +95,7 @@ export function ExplorePage() {
       })
       .catch(() => setPreferenceError('We could not load your preferences.'))
       .finally(() => setPreferenceLoading(false))
-  }, [authenticated])
+  }, [authLoading, authenticated])
 
   useEffect(() => {
     if (!selectedLocation) {
@@ -150,7 +151,7 @@ export function ExplorePage() {
   }, [radius, scoreRetryToken, selectedLocation])
 
   useEffect(() => {
-    if (!authenticated || !selectedLocation || !appliedPreferences) {
+    if (authLoading || !authenticated || !selectedLocation || !appliedPreferences) {
       setPersonalizedScore(null)
       return
     }
@@ -171,7 +172,7 @@ export function ExplorePage() {
         }
       })
     return () => controller.abort()
-  }, [appliedPreferences, authenticated, personalizedScoreRetryToken, radius, selectedLocation])
+  }, [appliedPreferences, authLoading, authenticated, personalizedScoreRetryToken, radius, selectedLocation])
 
   const visibleAmenities = useMemo(
     () => (category === 'all' ? amenities : amenities.filter((amenity) => amenity.category === category)),
@@ -425,6 +426,7 @@ export function ExplorePage() {
       />
       <PersonalizationPanel
         authenticated={authenticated}
+        authLoading={authLoading}
         profile={draftPreferences?.profile ?? 'custom'}
         weights={draftPreferences?.weights ?? weightsForProfile('custom')}
         error={preferenceError}
