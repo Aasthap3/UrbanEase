@@ -19,6 +19,9 @@ class Settings:
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', os.getenv('JWT_SECRET', 'change-this-development-secret'))
     JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRE_MINUTES', '30'))
+    NOMINATIM_BASE_URL = os.getenv('NOMINATIM_BASE_URL', 'https://nominatim.openstreetmap.org')
+    NOMINATIM_USER_AGENT = os.getenv('NOMINATIM_USER_AGENT', 'UrbanEase/0.1')
+    NOMINATIM_TIMEOUT_SECONDS = float(os.getenv('NOMINATIM_TIMEOUT_SECONDS', '10'))
 
 
 settings = Settings()

@@ -10,6 +10,18 @@ Authentication uses Argon2 password hashes and short-lived JWT access tokens. Co
 
 Invalid login attempts return the same generic error whether or not the email exists.
 
+# Location search
+
+`GET /api/locations/search?q=<query>&limit=<limit>` uses the public Nominatim geocoding service to find cities, neighborhoods, addresses, and landmarks. Queries are trimmed, must contain 2-200 characters, and the limit defaults to 5 with a maximum of 10.
+
+The response contains normalized `id`, `name`, `display_name`, numeric `latitude` and `longitude`, and selected `address` fields. Invalid upstream coordinates are ignored. No matches return `200 OK` with an empty list; upstream failures return `503 Service Unavailable`.
+
+Example:
+
+```bash
+curl 'http://127.0.0.1:8000/api/locations/search?q=Hadapsar%2C%20Pune&limit=5'
+```
+
 ## Example
 
 ```bash
@@ -31,10 +43,10 @@ The backend exposes a REST API for health, geocoding, neighborhood metrics, and 
 - POST /api/auth/register
 - POST /api/auth/login
 - GET /api/auth/me
+- GET /api/locations/search
 
 ## Planned endpoints
 
-- GET /api/geocode/search
 - GET /api/amenities/nearby
 - POST /api/score/calculate
 - POST /api/score/compare

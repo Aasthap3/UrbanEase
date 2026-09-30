@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.health import router as health_router
+from app.api.locations import router as locations_router
 
 app = FastAPI(
     title='UrbanEase API',
@@ -20,6 +21,7 @@ app.add_middleware(
 
 app.include_router(health_router, prefix='/api')
 app.include_router(auth_router, prefix='/api')
+app.include_router(locations_router, prefix='/api')
 
 
 @app.get('/')

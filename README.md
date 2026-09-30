@@ -2,7 +2,16 @@
 
 UrbanEase is a geospatial neighborhood discovery platform designed to help people understand how convenient a neighborhood is for everyday life.
 
-## Phase 3 status
+## Phase 4 status
+
+Location search is available through the public Nominatim geocoding service:
+
+- `GET /api/locations/search?q=<query>&limit=<limit>`
+- Queries are trimmed, require 2-200 characters, and return up to 10 results.
+- No results return `200 OK` with `[]`.
+- Nominatim failures return `503 Service Unavailable`.
+
+Search results are temporary normalized responses; searches are not automatically persisted as `Location` records.
 
 The project now includes password-based authentication with Argon2 password hashing and JWT access tokens.
 
@@ -111,6 +120,9 @@ DATABASE_URL=postgresql+psycopg://urbanease:urbanease@localhost:5432/urbanease
 JWT_SECRET_KEY=change-this-development-secret
 JWT_ALGORITHM=HS256
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
+NOMINATIM_USER_AGENT=UrbanEase/0.1
+NOMINATIM_TIMEOUT_SECONDS=10
 ```
 
 ### 3. Run the database migration

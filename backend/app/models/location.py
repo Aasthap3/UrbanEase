@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from geoalchemy2 import Geometry
+from geoalchemy2 import Geometry, WKTElement
 from sqlalchemy import DateTime, Float, Index, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import event
+from sqlalchemy.orm import Mapped, Mapper, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -29,3 +30,15 @@ class Location(Base):
 
     def __repr__(self) -> str:
         return f'<Location {self.name}>'
+
+
+@event.listens_for(Location, 'before_insert')
+@event.listens_for(Location, 'before_update')
+def synchronize_geometry(mapper: Mapper[Location], connection: object, target: Location) -> None:
+    if target.latitude is None or target.longitude is None:
+        target.geometry = None
+        return
+    target.geometry = WKTElement(
+        f'POINT({target.longitude} {target.latitude})',
+        srid=4326,
+    )

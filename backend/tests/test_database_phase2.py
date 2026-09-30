@@ -54,6 +54,13 @@ def test_core_models_can_be_created() -> None:
         assert preference.id is not None
         assert saved.id is not None
 
+        location_geometry = session.execute(
+            text('SELECT ST_AsText(geometry), ST_SRID(geometry) FROM locations WHERE id = :id'),
+            {'id': location.id},
+        ).one()
+        assert location_geometry[0] == 'POINT(77.4126 23.2599)'
+        assert location_geometry[1] == 4326
+
         geometry = session.execute(
             text('SELECT ST_AsText(geometry), ST_SRID(geometry) FROM amenities WHERE id = :id'),
             {'id': amenity.id},
@@ -71,6 +78,17 @@ def test_core_models_can_be_created() -> None:
         ).one()
         assert updated_geometry[0] == 'POINT(77.4131 23.2601)'
         assert updated_geometry[1] == 4326
+
+        location.latitude = 23.2602
+        location.longitude = 77.4132
+        session.commit()
+
+        updated_location_geometry = session.execute(
+            text('SELECT ST_AsText(geometry), ST_SRID(geometry) FROM locations WHERE id = :id'),
+            {'id': location.id},
+        ).one()
+        assert updated_location_geometry[0] == 'POINT(77.4132 23.2602)'
+        assert updated_location_geometry[1] == 4326
 
 
 def test_nearby_amenity_query_returns_expected_results() -> None:
