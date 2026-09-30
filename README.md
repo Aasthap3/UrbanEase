@@ -2,7 +2,17 @@
 
 UrbanEase is a geospatial neighborhood discovery platform designed to help people understand how convenient a neighborhood is for everyday life.
 
-## Phase 4 status
+## Phase 5 status
+
+Nearby amenity discovery is available through OpenStreetMap data queried with the Overpass API:
+
+- `GET /api/amenities/nearby?latitude=<lat>&longitude=<lon>&radius=<meters>`
+- Supported radii are 500, 1000, 2000, and 5000 meters.
+- Supported categories include grocery, hospital, pharmacy, bank, atm, bus_stop, metro_station, restaurant, hotel, petrol_pump, police_station, laundry, gym, school, and college.
+- Results are normalized, upserted by `(source, osm_type, osm_id)`, and queried with PostGIS.
+- No matches return `200 OK` with `count: 0` and an empty `amenities` list.
+
+Amenity data originates from OpenStreetMap through the public Overpass API. Overpass settings are configurable through the environment.
 
 Location search is available through the public Nominatim geocoding service:
 
@@ -123,6 +133,9 @@ JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
 NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
 NOMINATIM_USER_AGENT=UrbanEase/0.1
 NOMINATIM_TIMEOUT_SECONDS=10
+OVERPASS_BASE_URL=https://overpass-api.de/api/interpreter
+OVERPASS_TIMEOUT_SECONDS=30
+OVERPASS_USER_AGENT=UrbanEase/1.0
 ```
 
 ### 3. Run the database migration

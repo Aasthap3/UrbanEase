@@ -22,6 +22,9 @@ class Settings:
     NOMINATIM_BASE_URL = os.getenv('NOMINATIM_BASE_URL', 'https://nominatim.openstreetmap.org')
     NOMINATIM_USER_AGENT = os.getenv('NOMINATIM_USER_AGENT', 'UrbanEase/0.1')
     NOMINATIM_TIMEOUT_SECONDS = float(os.getenv('NOMINATIM_TIMEOUT_SECONDS', '10'))
+    OVERPASS_BASE_URL = os.getenv('OVERPASS_BASE_URL', 'https://overpass-api.de/api/interpreter')
+    OVERPASS_TIMEOUT_SECONDS = float(os.getenv('OVERPASS_TIMEOUT_SECONDS', '30'))
+    OVERPASS_USER_AGENT = os.getenv('OVERPASS_USER_AGENT', 'UrbanEase/1.0')
 
 
 settings = Settings()

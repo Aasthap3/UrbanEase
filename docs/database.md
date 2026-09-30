@@ -66,6 +66,7 @@ C:/Python313/python.exe -m alembic upgrade head
 
 - `users` stores account metadata and hashed password values.
 - `amenities` stores OSM or seed-source place metadata and a geometry point.
+- OSM amenities are deduplicated with the `(source, osm_type, osm_id)` unique identity.
 - `locations` stores user-selected or searched coordinates for neighborhood analysis.
 - `user_preferences` stores future score weighting per user and category.
 - `saved_locations` stores favorites and prevents duplicate entries per user and location.

@@ -5,7 +5,7 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 from geoalchemy2 import Geometry, WKTElement
-from sqlalchemy import DateTime, Float, Index, String
+from sqlalchemy import DateTime, Float, Index, String, UniqueConstraint
 from sqlalchemy import event
 from sqlalchemy.orm import Mapped, Mapper, mapped_column
 
@@ -35,12 +35,14 @@ class Amenity(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     osm_id: Mapped[str | None] = mapped_column(String(200), nullable=True, index=True)
+    osm_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     category: Mapped[AmenityCategory] = mapped_column(String(50), nullable=False, index=True)
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    website: Mapped[str | None] = mapped_column(String(500), nullable=True)
     opening_hours: Mapped[str | None] = mapped_column(String(200), nullable=True)
     source: Mapped[str | None] = mapped_column(String(100), nullable=True)
     geometry: Mapped[object | None] = mapped_column(Geometry('POINT', srid=4326, spatial_index=True), nullable=True)
@@ -54,6 +56,7 @@ class Amenity(Base):
 
     __table_args__ = (
         Index('ix_amenities_geometry', 'geometry', postgresql_using='gist'),
+        UniqueConstraint('source', 'osm_type', 'osm_id', name='uq_amenities_source_osm_element'),
     )
 
     def __repr__(self) -> str:
