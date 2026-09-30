@@ -2,16 +2,17 @@
 
 UrbanEase is a geospatial neighborhood discovery platform designed to help people understand how convenient a neighborhood is for everyday life.
 
-## Phase 1 status
+## Phase 2 status
 
-This repository currently contains the foundational project setup for the first development phase:
+The project now includes the database and PostGIS layer required for the next feature stages:
 
-- React + Vite frontend
-- FastAPI backend
-- PostGIS/PostgreSQL Docker setup
-- Shared environment configuration
-- Simple health-check communication between frontend and backend
-- UrbanEase landing page with product messaging
+- PostgreSQL + PostGIS Docker setup
+- SQLAlchemy session and configuration layer
+- Core data models for users, amenities, locations, neighborhoods, preferences, and saved locations
+- Spatial geometry columns and GiST indexes
+- Alembic initial migration
+- Database seed script for development data
+- Database health endpoint at `/api/health/db`
 
 ## Project structure
 
@@ -25,11 +26,17 @@ UrbanEase/
 │   └── index.html
 ├── backend/
 │   ├── app/
+│   │   ├── api/
+│   │   ├── core/
+│   │   ├── models/
+│   │   └── main.py
+│   ├── alembic/
 │   ├── tests/
 │   ├── requirements.txt
+│   ├── alembic.ini
 │   └── .env.example
 ├── database/
-│   ├── migrations/
+│   ├── init/
 │   └── seed/
 ├── docs/
 ├── docker-compose.yml
@@ -39,66 +46,108 @@ UrbanEase/
 └── package-lock.json
 ```
 
+## Database architecture
+
+```mermaid
+graph LR
+  Frontend --> API[FastAPI API]
+  API --> DB[(PostgreSQL + PostGIS)]
+  DB --> Amenities[Amenities]
+  DB --> Users[Users]
+  DB --> Locations[Locations]
+  DB --> Neighborhoods[Neighborhoods]
+```
+
 ## Quick start
 
 ### 1. Start PostgreSQL + PostGIS
 
 ```bash
-docker compose up -d
+docker compose up -d postgres
 ```
 
-### 2. Start the backend
+### 2. Configure environment values
 
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 3. Start the frontend
-
-```bash
-cd frontend
-npm install
-npm run dev -- --host
-```
-
-Then open the Vite local URL printed in the terminal, usually http://localhost:5173.
-
-## Environment configuration
-
-Copy the root `.env.example` file and update values as needed.
+Copy the example file if needed:
 
 ```bash
 cp .env.example .env
 ```
 
-## Backend health check
+Example settings:
 
-The API exposes a simple health endpoint at:
+```env
+POSTGRES_DB=urbanease
+POSTGRES_USER=urbanease
+POSTGRES_PASSWORD=urbanease
+DATABASE_URL=postgresql+psycopg://urbanease:urbanease@localhost:5432/urbanease
+```
 
-- http://localhost:8000/api/health
+### 3. Run the database migration
 
-The frontend is configured to call this endpoint for basic connectivity validation.
+```bash
+cd backend
+C:/Python313/python.exe -m alembic upgrade head
+```
 
-## Frontend landing page
+Windows PowerShell example:
 
-The landing page includes:
+```powershell
+cd backend
+$env:PYTHONPATH=(Get-Location).Path
+C:/Python313/python.exe -m alembic upgrade head
+```
 
-- navigation
-- hero section
-- search input
-- key amenity categories
-- product explanation
-- score overview
-- footer
+### 4. Start the backend
 
-## Next phase
+```bash
+cd backend
+$env:PYTHONPATH=(Get-Location).Path
+C:/Python313/python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-The next milestone is the database and PostGIS layer, followed by authentication and location search.
+### 5. Start the frontend
 
-## Data and methodology note
+```bash
+cd frontend
+npm install
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+Then open:
+
+- Frontend: http://localhost:5173
+- Health endpoint: http://localhost:8000/api/health
+- Database health endpoint: http://localhost:8000/api/health/db
+
+## Database health
+
+The backend exposes a database health check that validates the connection and PostGIS availability:
+
+```json
+{
+  "status": "ok",
+  "database": "connected",
+  "postgis": "available",
+  "version": "..."
+}
+```
+
+## Seed data
+
+Development seed data is available in:
+
+- [database/seed/seed_dev_data.py](database/seed/seed_dev_data.py)
+
+Run it with:
+
+```bash
+cd backend
+C:/Python313/python.exe -c "import sys; sys.path.insert(0, r'../backend'); from database.seed.seed_dev_data import seed_dev_data; seed_dev_data()"
+```
+
+Or from the project root when the path is adjusted as needed.
+
+## Notes
 
 UrbanEase is a decision-support system that interprets convenience through measurable access to amenities, distance, density, and user preferences. It is not an authority on whether a neighborhood is universally good or bad.
