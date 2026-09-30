@@ -4,9 +4,10 @@ from datetime import datetime, timezone
 from enum import Enum
 from uuid import UUID, uuid4
 
-from geoalchemy2 import Geometry
+from geoalchemy2 import Geometry, WKTElement
 from sqlalchemy import DateTime, Float, Index, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import event
+from sqlalchemy.orm import Mapped, Mapper, mapped_column
 
 from app.core.database import Base
 
@@ -57,3 +58,15 @@ class Amenity(Base):
 
     def __repr__(self) -> str:
         return f'<Amenity {self.name}>'
+
+
+@event.listens_for(Amenity, 'before_insert')
+@event.listens_for(Amenity, 'before_update')
+def synchronize_geometry(mapper: Mapper[Amenity], connection: object, target: Amenity) -> None:
+    if target.latitude is None or target.longitude is None:
+        target.geometry = None
+        return
+    target.geometry = WKTElement(
+        f'POINT({target.longitude} {target.latitude})',
+        srid=4326,
+    )

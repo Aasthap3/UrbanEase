@@ -1,16 +1,39 @@
+# Authentication
+
+Authentication uses Argon2 password hashes and short-lived JWT access tokens. Configure `JWT_SECRET_KEY`, `JWT_ALGORITHM`, and `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` in the environment.
+
+## Endpoints
+
+- `POST /api/auth/register` creates a user and returns public user data.
+- `POST /api/auth/login` returns `{ "access_token": "...", "token_type": "bearer" }`.
+- `GET /api/auth/me` returns the authenticated user and requires `Authorization: Bearer <token>`.
+
+Invalid login attempts return the same generic error whether or not the email exists.
+
+## Example
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/auth/login \
+	-H "Content-Type: application/json" \
+	-d '{"email":"aastha@example.com","password":"securepassword"}'
+
+curl http://127.0.0.1:8000/api/auth/me \
+	-H "Authorization: Bearer <access-token>"
+```
+
 # API overview
 
 The backend exposes a REST API for health, geocoding, neighborhood metrics, and future recommendation services.
 
-## Current endpoint
+## Current endpoints
 
 - GET /api/health
-
-## Planned endpoints
-
 - POST /api/auth/register
 - POST /api/auth/login
 - GET /api/auth/me
+
+## Planned endpoints
+
 - GET /api/geocode/search
 - GET /api/amenities/nearby
 - POST /api/score/calculate

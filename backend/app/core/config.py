@@ -16,7 +16,9 @@ class Settings:
     POSTGRES_DB = os.getenv('POSTGRES_DB', 'urbanease')
     POSTGRES_USER = os.getenv('POSTGRES_USER', 'urbanease')
     POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'urbanease')
-    JWT_SECRET = os.getenv('JWT_SECRET', 'change-me-in-production')
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', os.getenv('JWT_SECRET', 'change-this-development-secret'))
+    JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRE_MINUTES', '30'))
 
 
 settings = Settings()

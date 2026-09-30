@@ -2,6 +2,33 @@
 
 UrbanEase is a geospatial neighborhood discovery platform designed to help people understand how convenient a neighborhood is for everyday life.
 
+## Phase 3 status
+
+The project now includes password-based authentication with Argon2 password hashing and JWT access tokens.
+
+Authentication endpoints:
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me` (Bearer token required)
+
+Register and log in with curl:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Aastha","email":"aastha@example.com","password":"securepassword"}'
+
+curl -X POST http://127.0.0.1:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"aastha@example.com","password":"securepassword"}'
+
+curl http://127.0.0.1:8000/api/auth/me \
+  -H "Authorization: Bearer <access-token>"
+```
+
+Open `/docs` to authorize Swagger UI with the returned Bearer token.
+
 ## Phase 2 status
 
 The project now includes the database and PostGIS layer required for the next feature stages:
@@ -81,6 +108,9 @@ POSTGRES_DB=urbanease
 POSTGRES_USER=urbanease
 POSTGRES_PASSWORD=urbanease
 DATABASE_URL=postgresql+psycopg://urbanease:urbanease@localhost:5432/urbanease
+JWT_SECRET_KEY=change-this-development-secret
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
 ### 3. Run the database migration
